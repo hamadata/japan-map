@@ -12,7 +12,7 @@
  * Date: 2014-05-15
  */
 
-;(function($){
+(function($){
     "use strict";
 
     $.fn.japanMap = function(options){
@@ -46,7 +46,8 @@
             fontColor           : null,
             fontShadowColor     : null,
             onSelect            : function(){},
-            onHover             : function(){}
+            onHover             : function(){},
+            prefectureScore     : null
         }, options);
 
         var map;
@@ -326,6 +327,20 @@
         return definition_of_english_name[prefecture_or_area.code];
     };
 
+    Map.prototype.getPrefectureScore = function(prefecture){
+        return this.options.prefectureScore[prefecture.code];
+    };
+
+    Map.prototype.getScoreLightnessCoeff = function(prefecture){
+        var scores = this.options.prefectureScore;
+        var coeff =  ( 100 - 50 ) / ( Math.max.apply(null, scores) - Math.min.apply(null, scores) ) * scores[prefecture.code];
+        return coeff;
+    };
+
+    Map.prototype.getLightness = function(prefecture){
+        return 100 - this.getScoreLightnessCoeff(prefecture);
+    }
+
     Map.prototype.isArea = function(prefecture_or_area){
         return this.options.areas.indexOf(prefecture_or_area) > -1;
     };
@@ -598,7 +613,12 @@
 
     MapCanvas.prototype.setProperties = function(prefecture, area){
         var context = this.element.getContext("2d");
-        context.fillStyle = ("color" in area)? area.color : this.options.color;
+        if(this.options.prefectureScore){
+          context.fillStyle = "hsl(208, 99%, "+ this.getLightness(prefecture)+"%)";
+          console.log(this.getLightness(prefecture));
+        }else{
+          context.fillStyle = ("color" in area)? area.color : this.options.color;
+        }
 
         if (this.options.borderLineColor)
             context.strokeStyle = this.options.borderLineColor;
