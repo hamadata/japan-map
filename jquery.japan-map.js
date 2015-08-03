@@ -150,6 +150,7 @@
             fullName : prefecture? prefecture.name: null,
             ShortName : prefecture? this.getShortName(prefecture) : null,
             englishName : prefecture? this.getEnglishName(prefecture) : null,
+            prefectureScore : prefecture? this.getPrefectureScore(prefecture) : null,
             area : area? area : null
         };
     };
@@ -389,6 +390,7 @@
 
     MapCanvas.prototype.renderPrefectureMap = function(){
         var context = this.element.getContext("2d");
+        var prefecture_code = null;
 
         this.options.prefectures.forEach(function(prefecture){
 
@@ -398,16 +400,31 @@
 
             var area = this.findAreaBelongingToByCode(prefecture.code);
             if (area){
-                this.setProperties(prefecture,area);
+                var ret = this.setProperties(prefecture,area);
             } else {
                 throw "No area has such prefecture code '" + code + "'.";
             }
-
+            prefecture_code = ret ? ret : null
             context.fill();
             if (this.options.borderLineColor && this.options.borderLineWidth > 0)
                 context.stroke();
 
         }, this);
+
+        if(this.pointer != undefined && prefecture_code){
+            context.beginPath();
+            context.rect(this.pointer.x, this.pointer.y, 70, 40);
+            context.fillStyle = 'white';
+            context.fill();
+            context.lineWidth = 1;
+            context.strokeStyle = 'black';
+            context.zindex = 0;
+            context.stroke();
+            context.font = '18pt';
+            context.fillStyle = 'black';
+            context.fillText(this.data.fullName, this.pointer.x + 16, this.pointer.y + 16);
+            context.fillText(this.data.prefectureScore, this.pointer.x + 32, this.pointer.y + 32);
+        }
     };
 
     MapCanvas.prototype.renderAreaMap = function(){
@@ -615,7 +632,6 @@
         var context = this.element.getContext("2d");
         if(this.options.prefectureScore){
           context.fillStyle = "hsl(208, 99%, "+ this.getLightness(prefecture)+"%)";
-          console.log(this.getLightness(prefecture));
         }else{
           context.fillStyle = ("color" in area)? area.color : this.options.color;
         }
@@ -649,6 +665,7 @@
         }
 
         this.element.style.cursor = (this.data.code == null)? "default" : "pointer";
+        return this.hovered;
     };
 
     MapCanvas.prototype.isHovering = function(){
